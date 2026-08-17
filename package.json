@@ -28,11 +28,11 @@
     "agent",
     "ui"
   ],
-  "author": "gmh",
+  "author": "GMH13552",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/gmh/dsh-timer-scheduler-ui.git"
+    "url": "git+https://github.com/GMH13552/dsh-timer-scheduler-ui.git"
   },
   "dsh": {
     "bundle": {
