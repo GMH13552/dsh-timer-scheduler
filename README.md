@@ -24,6 +24,8 @@ One package, two halves, in the standard `dsh.client` + `dsh.bundle.patch` shape
 | `cordis.patch.yml` | bundle | Inserts the Host half into the web profile's host composition |
 | `package.json` | — | `dsh.client` (browser bundle) + `dsh.bundle.patch` (host row) |
 
+**Preset adaptation:** the `anchored-standard` preset keeps these tools resident for its agents via its `residentTools` option; every other preset works without any configuration.
+
 ## Installation
 
 Not published to npm yet. Install from source:

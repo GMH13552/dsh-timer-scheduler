@@ -24,6 +24,8 @@ DeepSeek Harness（DSH）插件：给 agent 一个**自主定时器**——让�
 | `cordis.patch.yml` | bundle | 把 Host 半面插入 web profile 的宿主组合 |
 | `package.json` | — | `dsh.client`（浏览器 bundle 声明）+ `dsh.bundle.patch`（宿主行） |
 
+**预设适配：** 已对 `anchored-standard` 预设做了适配（其工具门控的 `residentTools` 使这些工具常驻可见）；其余 preset 无需任何配置。
+
 ## 安装
 
 本包尚未发布到 npm，按源码安装：
