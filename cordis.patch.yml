@@ -1,0 +1,5 @@
+# dsh-timer-scheduler-ui bundle patch: mount the host plugin (the
+# /api/timer-reminders route) into the web profile's host composition.
+- insert:
+    - id: timer-scheduler-ui
+      name: 'dsh-timer-scheduler-ui'
