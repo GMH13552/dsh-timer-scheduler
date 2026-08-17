@@ -15,43 +15,25 @@ DeepSeek Harness（DSH）插件：给 agent 一个**自主定时器**——让�
 
 ## 结构
 
-完整功能横跨 DSH 的两个平面，本仓库**两半都包含**：
+一个包、两个半面，照 `dsh.client` + `dsh.bundle.patch` 的标准插件形态组织。**全部是 host 平面**：把这个 bundle 组合进 web profile 的宿主组合后，模型工具对**任何 preset 的每个 agent 都可见**，路由则服务浏览器面板。
 
-| 文件 | 平面 | 作用 |
+| 文件 | 半面 | 作用 |
 | --- | --- | --- |
-| `preset/timer-scheduler.mjs` | Agent 预设 | 三个模型工具（`schedule_reminder` / `list_reminders` / `cancel_reminder`）+ 自动唤醒 + 落盘持久化 |
-| `lib/index.js` | Web · Host | 注册 `GET /api/timer-reminders`，按 `sessionId` 过滤并返回提醒列表 |
-| `lib/client.js` | Web · Client | `shell.overlay` 右下角面板，每秒 `fetch` 刷新倒计时 |
-| `cordis.patch.yml` | Web · bundle | 把 Host 半面插入 web profile 的宿主组合 |
+| `lib/index.js` | Host | 三个模型工具（`schedule_reminder` / `list_reminders` / `cancel_reminder`）+ 自动唤醒 + 落盘持久化 + `GET /api/timer-reminders` |
+| `lib/client.js` | Client | `shell.overlay` 右下角面板，每秒 `fetch` 刷新倒计时 |
+| `cordis.patch.yml` | bundle | 把 Host 半面插入 web profile 的宿主组合 |
 | `package.json` | — | `dsh.client`（浏览器 bundle 声明）+ `dsh.bundle.patch`（宿主行） |
-
-agent 平面这一半承载模型可见的工具（必须挂进 agent 预设，模型才能在工具目录里看到它们）；web 平面提供可视化进度 + 数据路由。两半通过 `$DSH_HOME/timer-reminders.json` 互通。
 
 ## 安装
 
-两半都要装。
-
-### 1. Agent 平面 —— 定时工具
-
-把 `preset/timer-scheduler.mjs` 复制进你的 agent 预设目录，并在其 `agent.cordis.yml` 里加一行：
-
-```yaml
-- id: timer-scheduler
-  name: ./timer-scheduler.mjs
-```
-
-如果你的预设带工具门控（比如 `anchored-standard` 的 tool-bootstrap），把这几个工具名加进常驻集，保证模型随时能看到：
-
-```yaml
-# 在 tool-bootstrap 那一行的 config 里
-residentTools: [schedule_reminder, list_reminders, cancel_reminder]
-```
-
-重启 `dsh`（预设的 `.mjs` 插件在进程启动时加载）。
-
-### 2. Web 平面 —— 右下角面板
-
 本包尚未发布到 npm，按源码安装：
+
+> **host 平面工具**：一旦本 bundle 被组合，任何 preset 的每个 agent 都能调 `schedule_reminder` / `list_reminders` / `cancel_reminder`。如果你的预设带激进的工具门控（比如 `anchored-standard` 的 tool-bootstrap），把这几个工具名加进常驻集，保证其 agent 仍能看到：
+>
+> ```yaml
+> # 在 tool-bootstrap 那一行的 config 里
+> residentTools: [schedule_reminder, list_reminders, cancel_reminder]
+> ```
 
 1. 把本目录放进 web profile 的工作区，并在 web profile 的 `package.json` 里挂载依赖与 bundle：
 
@@ -101,8 +83,8 @@ residentTools: [schedule_reminder, list_reminders, cancel_reminder]
 
 ## 工作机制
 
-1. agent 调 `schedule_reminder`，预设插件用 Cordis `timer` 排一个一次性定时器，并把 `{id, note, dueMs, sessionId}` 写入 `~/.dsh/timer-reminders.json`。
-2. 到点时，预设插件通过 `agents.get(sessionId)` 找到对应 agent，构造一条 `source.kind = 'plugin'` 的 user 消息并 `agent.followup()` 投递，唤醒 driver。
+1. agent 调 `schedule_reminder`，host 插件用 Cordis `timer` 排一个一次性定时器，并把 `{id, note, dueMs, sessionId}` 写入 `~/.dsh/timer-reminders.json`。
+2. 到点时，host 插件通过 `agents.get(sessionId)` 找到对应 agent，构造一条 `source.kind = 'plugin'` 的 user 消息并 `agent.followup()` 投递，唤醒 driver。
 3. 本包（client 半面）每秒 `fetch` 一次 `/api/timer-reminders?sessionId=…`，从同一份文件读出本会话的提醒并渲染倒计时。
 
 ## 已知限制

@@ -15,43 +15,25 @@ A [DeepSeek Harness (DSH)](https://github.com/deepseek-ai/deepseek-harness) plug
 
 ## Structure
 
-The full feature spans the two DSH planes; this repository ships **both halves**:
+One package, two halves, in the standard `dsh.client` + `dsh.bundle.patch` shape. Everything is **host-plane**: composing this bundle into the web profile's host composition makes the model tools available to **every agent regardless of preset**, and the route serves the browser panel.
 
-| File | Plane | Role |
+| File | Half | Role |
 | --- | --- | --- |
-| `preset/timer-scheduler.mjs` | Agent preset | The three model tools (`schedule_reminder` / `list_reminders` / `cancel_reminder`), auto-wake, and disk persistence |
-| `lib/index.js` | Web · Host | Registers `GET /api/timer-reminders`, filtered by `sessionId` |
-| `lib/client.js` | Web · Client | `shell.overlay` bottom-right panel, polling every second |
-| `cordis.patch.yml` | Web · bundle | Inserts the Host half into the web profile's host composition |
+| `lib/index.js` | Host | The three model tools (`schedule_reminder` / `list_reminders` / `cancel_reminder`), auto-wake, disk persistence, and `GET /api/timer-reminders` |
+| `lib/client.js` | Client | `shell.overlay` bottom-right panel, polling every second |
+| `cordis.patch.yml` | bundle | Inserts the Host half into the web profile's host composition |
 | `package.json` | — | `dsh.client` (browser bundle) + `dsh.bundle.patch` (host row) |
-
-The agent-plane half is where the model-facing tools live — they must be composed into an agent preset for the model to see them. The web half provides the visual progress + data route. The two halves communicate through `$DSH_HOME/timer-reminders.json`.
 
 ## Installation
 
-The feature needs both halves installed.
-
-### 1. Agent plane — scheduling tools
-
-Copy `preset/timer-scheduler.mjs` into your agent preset directory and add a row to its `agent.cordis.yml`:
-
-```yaml
-- id: timer-scheduler
-  name: ./timer-scheduler.mjs
-```
-
-If your preset uses a tool-bootstrap filter (like the `anchored-standard` preset), keep the three tool names resident so the model can always see them:
-
-```yaml
-# inside the tool-bootstrap row's config
-residentTools: [schedule_reminder, list_reminders, cancel_reminder]
-```
-
-Restart `dsh` — preset `.mjs` plugins are loaded at process start.
-
-### 2. Web plane — reminder panel
-
 Not published to npm yet. Install from source:
+
+> **Host-plane tools:** once this bundle is composed, every agent on any preset can call `schedule_reminder` / `list_reminders` / `cancel_reminder`. If a preset uses an aggressive tool-bootstrap filter (like `anchored-standard`), keep the three tool names resident so its agents still see them:
+>
+> ```yaml
+> # inside the tool-bootstrap row's config
+> residentTools: [schedule_reminder, list_reminders, cancel_reminder]
+> ```
 
 1. Place this directory in the web profile workspace and mount it as a dependency + bundle in the profile's `package.json`:
 
@@ -101,8 +83,8 @@ The bottom-right panel shows the countdown while reminders are pending and hides
 
 ## How it works
 
-1. The agent calls `schedule_reminder`; the preset plugin arms a one-shot Cordis `timer` and writes `{id, note, dueMs, sessionId}` to `~/.dsh/timer-reminders.json`.
-2. On fire, the preset plugin resolves the agent via `agents.get(sessionId)`, builds a `source.kind = 'plugin'` user message, and delivers it through `agent.followup()` to wake the driver.
+1. The agent calls `schedule_reminder`; the host plugin arms a one-shot Cordis `timer` and writes `{id, note, dueMs, sessionId}` to `~/.dsh/timer-reminders.json`.
+2. On fire, the host plugin resolves the agent via `agents.get(sessionId)`, builds a `source.kind = 'plugin'` user message, and delivers it through `agent.followup()` to wake the driver.
 3. This package's client half fetches `/api/timer-reminders?sessionId=…` every second and renders the countdown from that same file.
 
 ## Known limitations
