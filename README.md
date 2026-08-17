@@ -1,5 +1,7 @@
 # dsh-timer-scheduler-ui
 
+**Languages:** [English](README.md) · [简体中文](README.zh.md)
+
 A [DeepSeek Harness (DSH)](https://github.com/deepseek-ai/deepseek-harness) plugin: an **agent self-scheduler** that wakes the agent at a future time to autonomously check on background jobs, remote tasks, or anything that needs a "come back later" look — without a human having to prompt it — plus a **bottom-right reminder panel** in the web UI.
 
 ## Features
@@ -13,18 +15,41 @@ A [DeepSeek Harness (DSH)](https://github.com/deepseek-ai/deepseek-harness) plug
 
 ## Structure
 
-One package, two halves, in the standard `dsh.client` + `dsh.bundle.patch` shape:
+The full feature spans the two DSH planes; this repository ships **both halves**:
 
-| File | Half | Role |
+| File | Plane | Role |
 | --- | --- | --- |
-| `lib/index.js` | Host | Registers `GET /api/timer-reminders`, filtered by `sessionId` |
-| `lib/client.js` | Client | `shell.overlay` bottom-right panel, polling every second |
-| `cordis.patch.yml` | bundle | Inserts the Host half into the web profile's host composition |
+| `preset/timer-scheduler.mjs` | Agent preset | The three model tools (`schedule_reminder` / `list_reminders` / `cancel_reminder`), auto-wake, and disk persistence |
+| `lib/index.js` | Web · Host | Registers `GET /api/timer-reminders`, filtered by `sessionId` |
+| `lib/client.js` | Web · Client | `shell.overlay` bottom-right panel, polling every second |
+| `cordis.patch.yml` | Web · bundle | Inserts the Host half into the web profile's host composition |
 | `package.json` | — | `dsh.client` (browser bundle) + `dsh.bundle.patch` (host row) |
 
-> Note: the model-facing `schedule_reminder` / `list_reminders` / `cancel_reminder` tools themselves live in an **agent-plane `timer-scheduler` preset plugin** (one row + one `.mjs` in `agent.cordis.yml`), not in this package. This package only provides the **visual progress + data route**. For a full deployment you need both: the preset gives scheduling + wake + persistence; this package gives the UI.
+The agent-plane half is where the model-facing tools live — they must be composed into an agent preset for the model to see them. The web half provides the visual progress + data route. The two halves communicate through `$DSH_HOME/timer-reminders.json`.
 
 ## Installation
+
+The feature needs both halves installed.
+
+### 1. Agent plane — scheduling tools
+
+Copy `preset/timer-scheduler.mjs` into your agent preset directory and add a row to its `agent.cordis.yml`:
+
+```yaml
+- id: timer-scheduler
+  name: ./timer-scheduler.mjs
+```
+
+If your preset uses a tool-bootstrap filter (like the `anchored-standard` preset), keep the three tool names resident so the model can always see them:
+
+```yaml
+# inside the tool-bootstrap row's config
+residentTools: [schedule_reminder, list_reminders, cancel_reminder]
+```
+
+Restart `dsh` — preset `.mjs` plugins are loaded at process start.
+
+### 2. Web plane — reminder panel
 
 Not published to npm yet. Install from source:
 

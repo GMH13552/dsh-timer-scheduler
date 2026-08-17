@@ -1,5 +1,7 @@
 # dsh-timer-scheduler-ui
 
+**语言：** [English](README.md) · [简体中文](README.zh.md)
+
 DeepSeek Harness（DSH）插件：给 agent 一个**自主定时器**——让它在未来的某个时间点自动醒来，去检查后台任务 / 远程任务 / 任何需要「过一会儿再看一眼」的事，无需人类手动唤起；同时在 Web 界面**右下角**挂一个提醒倒计时面板。
 
 ## 功能
@@ -13,18 +15,41 @@ DeepSeek Harness（DSH）插件：给 agent 一个**自主定时器**——让�
 
 ## 结构
 
-一个包、两个半面，照 `dsh.client` + `dsh.bundle.patch` 的标准插件形态组织：
+完整功能横跨 DSH 的两个平面，本仓库**两半都包含**：
 
-| 文件 | 半面 | 作用 |
+| 文件 | 平面 | 作用 |
 | --- | --- | --- |
-| `lib/index.js` | Host | 注册 `GET /api/timer-reminders`，按 `sessionId` 过滤并返回提醒列表 |
-| `lib/client.js` | Client | `shell.overlay` 右下角面板，每秒 `fetch` 刷新倒计时 |
-| `cordis.patch.yml` | bundle | 把 Host 半面插入 web profile 的宿主组合 |
+| `preset/timer-scheduler.mjs` | Agent 预设 | 三个模型工具（`schedule_reminder` / `list_reminders` / `cancel_reminder`）+ 自动唤醒 + 落盘持久化 |
+| `lib/index.js` | Web · Host | 注册 `GET /api/timer-reminders`，按 `sessionId` 过滤并返回提醒列表 |
+| `lib/client.js` | Web · Client | `shell.overlay` 右下角面板，每秒 `fetch` 刷新倒计时 |
+| `cordis.patch.yml` | Web · bundle | 把 Host 半面插入 web profile 的宿主组合 |
 | `package.json` | — | `dsh.client`（浏览器 bundle 声明）+ `dsh.bundle.patch`（宿主行） |
 
-> 注意：`schedule_reminder` / `list_reminders` / `cancel_reminder` 这三个模型工具本身**不在本包里**——它们属于 agent 平面的 `timer-scheduler` 预设插件（`agent.cordis.yml` 里的一行 + 一个 `.mjs`）。本包只负责**右下角 UI + 数据路由**。完整部署时两者都要装：预设提供「定时 + 唤醒 + 落盘」，本包提供「可视化进度」。
+agent 平面这一半承载模型可见的工具（必须挂进 agent 预设，模型才能在工具目录里看到它们）；web 平面提供可视化进度 + 数据路由。两半通过 `$DSH_HOME/timer-reminders.json` 互通。
 
 ## 安装
+
+两半都要装。
+
+### 1. Agent 平面 —— 定时工具
+
+把 `preset/timer-scheduler.mjs` 复制进你的 agent 预设目录，并在其 `agent.cordis.yml` 里加一行：
+
+```yaml
+- id: timer-scheduler
+  name: ./timer-scheduler.mjs
+```
+
+如果你的预设带工具门控（比如 `anchored-standard` 的 tool-bootstrap），把这几个工具名加进常驻集，保证模型随时能看到：
+
+```yaml
+# 在 tool-bootstrap 那一行的 config 里
+residentTools: [schedule_reminder, list_reminders, cancel_reminder]
+```
+
+重启 `dsh`（预设的 `.mjs` 插件在进程启动时加载）。
+
+### 2. Web 平面 —— 右下角面板
 
 本包尚未发布到 npm，按源码安装：
 
