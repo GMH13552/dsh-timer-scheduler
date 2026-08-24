@@ -92,6 +92,7 @@ The bottom-right panel shows the countdown while reminders are pending and hides
 ## Known limitations
 
 - Cold resume requires session persistence to be configured and the owning session to be resumable. If resume fails, the reminder is logged and skipped rather than silently dropped. The cold-resumed AgentHandle is kept until the plugin is unloaded, so the woken session stays resident after the reminder; a future version may dispose it after the wake turn settles.
+- Reminders that become due while the DSH process is down are re-armed on startup and fire immediately (instead of being skipped).
 - Delays beyond ~24.8 days are chunked, so they work, but the mechanism is "in-process timer + disk snapshot"; the timer only needs the process to stay up to fire.
 
 ## License
