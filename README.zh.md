@@ -86,12 +86,13 @@ DeepSeek Harness（DSH）插件：给 agent 一个**自主定时器**——让�
 ## 工作机制
 
 1. agent 调 `schedule_reminder`，host 插件用 Cordis `timer` 排一个一次性定时器，并把 `{id, note, dueMs, sessionId}` 写入 `~/.dsh/timer-reminders.json`。
-2. 到点时，host 插件通过 `agents.get(sessionId)` 找到对应 agent，构造一条 `source.kind = 'plugin'` 的 user 消息并 `agent.followup()` 投递，唤醒 driver。
+2. 到点时，host 插件先通过 `agents.get(sessionId)` 找 live agent；如果不在内存，则通过 `ctx.agents.resume()` 冷恢复持久化会话，再构造一条 `source.kind = 'plugin'` 的 user 消息并 `agent.followup()` 投递唤醒 driver。普通会话和 continuable 子代理会话都支持（只要配置了 session persistence 且该会话可恢复）。
 3. 本包（client 半面）每秒 `fetch` 一次 `/api/timer-reminders?sessionId=…`，从同一份文件读出本会话的提醒并渲染倒计时。
 
 ## 已知限制
 
-- 提醒到点时，**对应的会话必须是 live 的**（进程运行中、会话已打开）。会话处于冷状态（重启后未重新打开）时，提醒会被跳过并打一条警告日志——冷恢复（cold-resume）不在当前范围内。
+- 冷恢复要求已配置 session persistence 且目标会话可恢复；若恢复失败，会记 warning 并跳过，不会静默丢失。
+- 冷恢复出的 AgentHandle 会保持到插件卸载；因此被唤醒的会话在提醒后仍驻留内存。后续版本可考虑在唤醒 turn 结束后自动释放。
 - 超过约 24.8 天的定时用分段续期实现，理论支持；但提醒是「进程内 timer + 磁盘快照」的混合，进程长时间不重启即可正常触发。
 
 ## License

@@ -86,12 +86,12 @@ The bottom-right panel shows the countdown while reminders are pending and hides
 ## How it works
 
 1. The agent calls `schedule_reminder`; the host plugin arms a one-shot Cordis `timer` and writes `{id, note, dueMs, sessionId}` to `~/.dsh/timer-reminders.json`.
-2. On fire, the host plugin resolves the agent via `agents.get(sessionId)`, builds a `source.kind = 'plugin'` user message, and delivers it through `agent.followup()` to wake the driver.
+2. On fire, the host plugin resolves the agent via `agents.get(sessionId)`. If it is not live, the plugin cold-resumes the persisted session through `ctx.agents.resume()`, then builds a `source.kind = 'plugin'` user message and delivers it through `agent.followup()` to wake the driver. This works for both regular sessions and continuable subagent sessions (as long as session persistence is configured and the session can be resumed).
 3. This package's client half fetches `/api/timer-reminders?sessionId=…` every second and renders the countdown from that same file.
 
 ## Known limitations
 
-- On fire, the owning **session must be live** (process running, session open). A cold session is skipped with a warning — cold-resume is out of scope for now.
+- Cold resume requires session persistence to be configured and the owning session to be resumable. If resume fails, the reminder is logged and skipped rather than silently dropped. The cold-resumed AgentHandle is kept until the plugin is unloaded, so the woken session stays resident after the reminder; a future version may dispose it after the wake turn settles.
 - Delays beyond ~24.8 days are chunked, so they work, but the mechanism is "in-process timer + disk snapshot"; the timer only needs the process to stay up to fire.
 
 ## License
