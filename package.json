@@ -1,7 +1,7 @@
 {
   "name": "dsh-timer-scheduler-ui",
   "version": "0.1.0",
-  "description": "DSH plugin: an agent self-scheduler that wakes the agent later to check on background/remote work, plus a bottom-right reminder panel in the web UI.",
+  "description": "DSH plugin: an agent self-scheduler that wakes the agent later to check on background/remote work, plus a header reminder menu in the web UI.",
   "type": "module",
   "main": "lib/index.js",
   "exports": {

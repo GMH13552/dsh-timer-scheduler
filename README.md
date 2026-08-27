@@ -2,7 +2,7 @@
 
 **Languages:** [English](README.md) · [简体中文](README.zh.md)
 
-A [DeepSeek Harness (DSH)](https://github.com/deepseek-ai/deepseek-harness) plugin: an **agent self-scheduler** that wakes the agent at a future time to autonomously check on background jobs, remote tasks, or anything that needs a "come back later" look — without a human having to prompt it — plus a **bottom-right reminder panel** in the web UI.
+A [DeepSeek Harness (DSH)](https://github.com/deepseek-ai/deepseek-harness) plugin: an **agent self-scheduler** that wakes the agent at a future time to autonomously check on background jobs, remote tasks, or anything that needs a "come back later" look — without a human having to prompt it — plus a **header reminder menu** in the web UI.
 
 ## Features
 
@@ -11,7 +11,7 @@ A [DeepSeek Harness (DSH)](https://github.com/deepseek-ai/deepseek-harness) plug
 - **`cancel_reminder`** — cancel a reminder by id.
 - **Auto-wake** — on fire, the agent is woken through `agent.followup()` with a new turn; it acts and reports on its own, no human wake-up needed.
 - **Persistence** — pending reminders are serialized to `$DSH_HOME/timer-reminders.json` and re-armed on restart.
-- **Bottom-right panel** (client half) — per-reminder note + live countdown, theme-aware via `--dsw-alias-*` tokens, hidden when empty, never covering the send button.
+- **Header reminder menu** (client half) — per-reminder note + live countdown, theme-aware via `--dsw-alias-*` tokens, hidden when empty, never covering the send button.
 
 ## Structure
 
@@ -20,7 +20,7 @@ One package, two halves, in the standard `dsh.client` + `dsh.bundle.patch` shape
 | File | Half | Role |
 | --- | --- | --- |
 | `lib/index.js` | Host | The three model tools (`schedule_reminder` / `list_reminders` / `cancel_reminder`), auto-wake, disk persistence, and `GET /api/timer-reminders` |
-| `lib/client.js` | Client | `shell.overlay` bottom-right panel, polling every second |
+| `lib/client.js` | Client | `conversation.session.header.actions` compact dropdown, polling every second |
 | `cordis.patch.yml` | bundle | Inserts the Host half into the web profile's host composition |
 | `package.json` | — | `dsh.client` (browser bundle) + `dsh.bundle.patch` (host row) |
 
@@ -81,7 +81,7 @@ In an agent session, just say:
 - "Check the deployment at 3pm" → `schedule_reminder(at="15:00", note=…)`
 - Manage with `list_reminders` / `cancel_reminder`.
 
-The bottom-right panel shows the countdown while reminders are pending and hides when empty.
+The header reminder menu shows the countdown while reminders are pending and hides when empty.
 
 ## How it works
 

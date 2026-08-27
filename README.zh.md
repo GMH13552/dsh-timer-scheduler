@@ -2,7 +2,7 @@
 
 **语言：** [English](README.md) · [简体中文](README.zh.md)
 
-DeepSeek Harness（DSH）插件：给 agent 一个**自主定时器**——让它在未来的某个时间点自动醒来，去检查后台任务 / 远程任务 / 任何需要「过一会儿再看一眼」的事，无需人类手动唤起；同时在 Web 界面**右下角**挂一个提醒倒计时面板。
+DeepSeek Harness（DSH）插件：给 agent 一个**自主定时器**——让它在未来的某个时间点自动醒来，去检查后台任务 / 远程任务 / 任何需要「过一会儿再看一眼」的事，无需人类手动唤起；同时在 Web 界面**顶部会话头**挂一个顶部会话头提醒入口。
 
 ## 功能
 
@@ -11,7 +11,7 @@ DeepSeek Harness（DSH）插件：给 agent 一个**自主定时器**——让�
 - **`cancel_reminder`**：按 id 取消提醒。
 - **自动唤醒**：到点后通过 `agent.followup()` 把一条 `user` 消息投进该 agent 的 inbox，agent 以一个新轮次被唤醒并自主处理、汇报，**全程不需要人类唤起**。
 - **持久化**：待触发提醒序列化到 `$DSH_HOME/timer-reminders.json`，进程重启后重新 arm，提醒不丢。
-- **右下角面板**（client 半面）：显示每条提醒的备注 + 实时倒计时，主题跟随 `--dsw-alias-*`，无提醒时自动隐藏、不挡发送按钮。
+- **顶部会话头提醒菜单**（client 半面）：显示每条提醒的备注 + 实时倒计时，主题跟随 `--dsw-alias-*`，无提醒时自动隐藏、不挡发送按钮。
 
 ## 结构
 
@@ -20,7 +20,7 @@ DeepSeek Harness（DSH）插件：给 agent 一个**自主定时器**——让�
 | 文件 | 半面 | 作用 |
 | --- | --- | --- |
 | `lib/index.js` | Host | 三个模型工具（`schedule_reminder` / `list_reminders` / `cancel_reminder`）+ 自动唤醒 + 落盘持久化 + `GET /api/timer-reminders` |
-| `lib/client.js` | Client | `shell.overlay` 右下角面板，每秒 `fetch` 刷新倒计时 |
+| `lib/client.js` | Client | `conversation.session.header.actions` 紧凑下拉菜单，每秒 `fetch` 刷新倒计时 |
 | `cordis.patch.yml` | bundle | 把 Host 半面插入 web profile 的宿主组合 |
 | `package.json` | — | `dsh.client`（浏览器 bundle 声明）+ `dsh.bundle.patch`（宿主行） |
 
@@ -81,7 +81,7 @@ DeepSeek Harness（DSH）插件：给 agent 一个**自主定时器**——让�
 - 「**下午 3 点看一眼部署结果**」→ `schedule_reminder(at="15:00", note=…)`
 - 用 `list_reminders` / `cancel_reminder` 管理已有提醒。
 
-右下角面板：有提醒时显示倒计时，到点自动消失；没提醒时隐藏。
+顶部会话头提醒菜单：有提醒时显示倒计时，到点自动消失；没提醒时隐藏。
 
 ## 工作机制
 
