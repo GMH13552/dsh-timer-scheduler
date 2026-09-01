@@ -7,6 +7,7 @@ DeepSeek Harness（DSH）插件：给 agent 一个**自主定时器**——让�
 ## 功能
 
 - **`schedule_reminder`**：安排一个一次性提醒，支持相对时间（`delay_seconds`）或绝对时间（ISO 8601 / `HH:MM[:SS]`）。
+- **`subject` 自动取消**：可给提醒传一个 `subject`（后台子代理 id / job id）；当对应子代理 settled、完成通知注入父会话 inbox 时，插件自动删除匹配提醒，避免过期提醒再唤醒。
 - **`list_reminders`**：查看当前待触发的提醒。
 - **`cancel_reminder`**：按 id 取消提醒。
 - **自动唤醒**：到点后通过 `agent.followup()` 把一条 `user` 消息投进该 agent 的 inbox，agent 以一个新轮次被唤醒并自主处理、汇报，**全程不需要人类唤起**。
@@ -77,7 +78,7 @@ DeepSeek Harness（DSH）插件：给 agent 一个**自主定时器**——让�
 
 在 agent 会话里直接说：
 
-- 「**30 分钟后提醒我看看那个后台任务跑完没**」→ `schedule_reminder(delay_seconds=1800, note=…)`
+- 「**30 分钟后提醒我看看那个后台任务跑完没**」→ `schedule_reminder(delay_seconds=1800, note=…, subject=<subagentId>)`
 - 「**下午 3 点看一眼部署结果**」→ `schedule_reminder(at="15:00", note=…)`
 - 用 `list_reminders` / `cancel_reminder` 管理已有提醒。
 
@@ -85,8 +86,9 @@ DeepSeek Harness（DSH）插件：给 agent 一个**自主定时器**——让�
 
 ## 工作机制
 
-1. agent 调 `schedule_reminder`，host 插件用 Cordis `timer` 排一个一次性定时器，并把 `{id, note, dueMs, sessionId}` 写入 `~/.dsh/timer-reminders.json`。
+1. agent 调 `schedule_reminder`，host 插件用 Cordis `timer` 排一个一次性定时器，并把 `{id, note, dueMs, sessionId, subject?}` 写入 `~/.dsh/timer-reminders.json`。
 2. 到点时，host 插件先通过 `agents.get(sessionId)` 找 live agent；如果不在内存，则通过 `ctx.agents.resume()` 冷恢复持久化会话，再构造一条 `source.kind = 'plugin'` 的 user 消息并 `agent.followup()` 投递唤醒 driver。普通会话和 continuable 子代理会话都支持（只要配置了 session persistence 且该会话可恢复）。
+3. 若提醒带有 `subject` 且对应后台子代理 completions 消息（`source.kind = 'subagent-settled'`）进入父会话 inbox，host 插件会自动取消该提醒。
 3. 本包（client 半面）每秒 `fetch` 一次 `/api/timer-reminders?sessionId=…`，从同一份文件读出本会话的提醒并渲染倒计时。
 
 ## 已知限制
