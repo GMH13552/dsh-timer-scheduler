@@ -7,7 +7,7 @@ A [DeepSeek Harness (DSH)](https://github.com/deepseek-ai/deepseek-harness) plug
 ## Features
 
 - **`schedule_reminder`** — schedule a one-shot reminder, relative (`delay_seconds`) or absolute (`at`: ISO 8601 / `HH:MM[:SS]`).
-- **Auto-cancel via `subject`** — pass a `subject` (background subagent id / job id); when that subagent settles and its completion notice enters the parent inbox, the plugin cancels matching reminders automatically.
+- **Auto-cancel via `subject`** — pass a `subject` (background subagent id / shell background job id); when that subagent or background job settles and its completion notice enters the parent inbox, the plugin cancels matching reminders automatically.
 - **`list_reminders`** — list pending reminders.
 - **`cancel_reminder`** — cancel a reminder by id.
 - **Auto-wake** — on fire, the agent is woken through `agent.followup()` with a new turn; it acts and reports on its own, no human wake-up needed.
@@ -88,7 +88,7 @@ The header reminder menu shows the countdown while reminders are pending and hid
 
 1. The agent calls `schedule_reminder`; the host plugin arms a one-shot Cordis `timer` and writes `{id, note, dueMs, sessionId, subject?}` to `~/.dsh/timer-reminders.json`.
 2. On fire, the host plugin resolves the agent via `agents.get(sessionId)`. If it is not live, the plugin cold-resumes the persisted session through `ctx.agents.resume()`, then builds a `source.kind = 'plugin'` user message and delivers it through `agent.followup()` to wake the driver. This works for both regular sessions and continuable subagent sessions (as long as session persistence is configured and the session can be resumed).
-3. If a reminder carries a `subject` and a matching background subagent completion notice (`source.kind = 'subagent-settled'`) enters the parent session's inbox, the host plugin cancels the reminder automatically.
+3. If a reminder carries a `subject` and a matching background subagent completion notice (`source.kind = 'subagent-settled'`) or shell background job completion notice (`source.plugin = 'tool-jobs'`) enters the parent session's inbox, the host plugin cancels the reminder automatically.
 4. This package's client half fetches `/api/timer-reminders?sessionId=…` every second and renders the countdown from that same file.
 
 ## Known limitations
