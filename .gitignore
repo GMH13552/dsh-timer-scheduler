@@ -1,3 +1,9 @@
 node_modules/
 *.log
 .DS_Store
+
+# Root entry aliases are written by scripts/sync-profile.mjs into an installed
+# profile (the host loader may prefer <pkg>/index.js over package.json main).
+# They never belong in the repo: the canonical entry is lib/index.js.
+/index.js
+/client.js

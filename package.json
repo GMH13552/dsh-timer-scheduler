@@ -1,6 +1,6 @@
 {
   "name": "dsh-timer-scheduler-ui",
-  "version": "0.2.0",
+  "version": "0.2.2",
   "description": "DSH plugin: an agent self-scheduler that wakes the agent later to check on background/remote work, plus a header reminder menu in the web UI.",
   "type": "module",
   "main": "lib/index.js",
@@ -11,9 +11,12 @@
   },
   "files": [
     "lib",
+    "scripts",
+    "test",
     "cordis.patch.yml",
     "README.md",
     "README.zh.md",
+    "PROFILE_EVIDENCE.md",
     "LICENSE"
   ],
   "keywords": [
@@ -32,7 +35,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/GMH13552/dsh-timer-scheduler.git"
+    "url": "https://github.com/GMH13552/dsh-timer-scheduler.git"
   },
   "dsh": {
     "bundle": {
@@ -40,12 +43,33 @@
     },
     "client": {
       "inject": [
-        "@deepseek-ai/dsh-client-runtime",
-        "@deepseek-ai/dsh-client-locale",
-        "@deepseek-ai/dsh-api-remotes"
+        "@deepseek-ai/dsh-cordis-client-runner",
+        "@deepseek-ai/dsh-client-ui-renderer",
+        "@deepseek-ai/dsh-api-session-controller",
+        "@deepseek-ai/dsh-client-ui-conversation"
       ],
       "platform": "web",
       "immediately": true
-    }
+    },
+    "compatibility": {
+      "dshReleases": {
+        "0.1.0-rc.8": "compatible",
+        "0.1.1-rc.1": "compatible",
+        "0.1.1-rc.2": "compatible",
+        "0.1.5-rc.1": "compatible"
+      },
+      "dsh": ">=0.1.0-rc.8 <0.2.0",
+      "node": ">=20"
+    },
+    "entryIds": [
+      "timer-scheduler-ui"
+    ]
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node test/delivery.mjs && node test/client.mjs",
+    "sync:profile": "node scripts/sync-profile.mjs"
   }
 }
